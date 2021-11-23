@@ -40,9 +40,9 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public Account getAccount(long id) {
         Account account = accountRepository.getAccount(AccountKey.valueOf(id));
-        if (Objects.isNull(account)) {
+        if (Objects.isNull(account))
             throw new AccountNotFoundException("Account not found by id " + id);
-        }
+
         return account;
     }
 
@@ -53,12 +53,20 @@ public class AccountServiceImpl implements AccountService {
             throw new BalanceNotEnoughException(source.getAccountKey(), source.getBalance());
         }
 
-        Account lock1 = null;
-        Account lock2 = null;
-
+        if (!(source instanceof BankAccount)) {
+            logger.error("source is NOT instance of BankAccount");
+            return;
+        }
         BankAccount sourceAccount = (BankAccount) source;
+
+        if (!(target instanceof BankAccount)) {
+            logger.error("target is NOT instance of BankAccount");
+            return;
+        }
         BankAccount targetAccount = (BankAccount) target;
 
+        Account lock1;
+        Account lock2;
         if (sourceAccount.compareTo(targetAccount) > 0) {
             lock1 = source;
             lock2 = target;

@@ -27,8 +27,6 @@ public class BankAccountKey extends AccountKey implements Comparable<BankAccount
 
     @Override
     public int compareTo(BankAccountKey o) {
-        if (accountId == o.accountId) return 0;
-        else if (accountId > o.accountId) return 1;
-        else return -1;
+        return Long.compare(accountId, o.accountId);
     }
 }
