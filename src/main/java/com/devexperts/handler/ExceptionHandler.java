@@ -2,6 +2,7 @@ package com.devexperts.handler;
 
 import com.devexperts.exception.AccountNotFoundException;
 import com.devexperts.exception.BalanceNotEnoughException;
+import com.devexperts.exception.TransferAmountValidationException;
 import com.devexperts.exception.TransferFailedException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -15,16 +16,16 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 public class ExceptionHandler extends ResponseEntityExceptionHandler {
 
     @org.springframework.web.bind.annotation.ExceptionHandler
-            (value = {AccountNotFoundException.class})
-    protected ResponseEntity<Object> handleNotFound(RuntimeException runtimeException, WebRequest webRequest) {
+            (value = {TransferAmountValidationException.class})
+    protected ResponseEntity<Object> handleTransferAmount(RuntimeException runtimeException, WebRequest webRequest) {
         return handleExceptionInternal(runtimeException, runtimeException.getMessage(),
-                new HttpHeaders(), HttpStatus.NOT_FOUND, webRequest);
+                new HttpHeaders(), HttpStatus.BAD_REQUEST, webRequest);
     }
 
     @org.springframework.web.bind.annotation.ExceptionHandler
-            (value = {BalanceNotEnoughException.class, TransferFailedException.class})
-    protected ResponseEntity<Object> handleTransferFail(RuntimeException runtimeException, WebRequest webRequest) {
+            (value = {AccountNotFoundException.class, BalanceNotEnoughException.class, TransferFailedException.class})
+    protected ResponseEntity<Object> handleNotFoundAndTransferFail(RuntimeException runtimeException, WebRequest webRequest) {
         return handleExceptionInternal(runtimeException, runtimeException.getMessage(),
-                new HttpHeaders(), HttpStatus.BAD_REQUEST, webRequest);
+                new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR, webRequest);
     }
 }

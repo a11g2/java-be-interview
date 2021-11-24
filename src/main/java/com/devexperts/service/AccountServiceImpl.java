@@ -2,6 +2,7 @@ package com.devexperts.service;
 
 import com.devexperts.exception.AccountNotFoundException;
 import com.devexperts.exception.BalanceNotEnoughException;
+import com.devexperts.exception.TransferAmountValidationException;
 import com.devexperts.exception.TransferFailedException;
 import com.devexperts.model.account.Account;
 import com.devexperts.model.account.AccountKey;
@@ -12,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-
 import java.util.Objects;
 
 
@@ -20,6 +20,7 @@ import java.util.Objects;
 public class AccountServiceImpl implements AccountService {
 
     private final AccountRepository accountRepository;
+    private final static int ZERO_BALANCE = 0;
     private final Logger logger = LoggerFactory.getLogger(AccountServiceImpl.class);
 
 
@@ -48,10 +49,10 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public void transfer(Account source, Account target, double amount) {
+        if (amount < ZERO_BALANCE)
+            throw new TransferAmountValidationException("The balance cannot be negative, that is, less than zero");
 
-        if (source.getBalance().compareTo(amount) < 0) {
-            throw new BalanceNotEnoughException(source.getAccountKey(), source.getBalance());
-        }
+        checkBalanceNotEnough(source, amount);
 
         if (!(source instanceof BankAccount)) {
             logger.error("source is NOT instance of BankAccount");
@@ -77,6 +78,7 @@ public class AccountServiceImpl implements AccountService {
         }
 
         synchronized (lock1) {
+            checkBalanceNotEnough(source, amount);
             updateAccountBalance(sourceAccount, amount, false);
             synchronized (lock2) {
                 try {
@@ -93,5 +95,11 @@ public class AccountServiceImpl implements AccountService {
     private void updateAccountBalance(BankAccount account, double amount, boolean increment) {
         account.setBalance(increment ? (account.getBalance() + amount) : (account.getBalance() - amount));
         accountRepository.updateAccount(account);
+    }
+
+    private void checkBalanceNotEnough(Account account, double amount) {
+        if (account.getBalance().compareTo(amount) < 0)
+            throw new BalanceNotEnoughException(account.getAccountKey(), account.getBalance());
+
     }
 }

@@ -2,6 +2,7 @@ package test;
 
 import com.devexperts.exception.AccountNotFoundException;
 import com.devexperts.exception.BalanceNotEnoughException;
+import com.devexperts.exception.TransferAmountValidationException;
 import com.devexperts.exception.TransferFailedException;
 import com.devexperts.model.account.Account;
 import com.devexperts.model.account.BankAccount;
@@ -72,6 +73,22 @@ public class AccountServiceTest {
         //then
         Mockito.verify(accountRepository).updateAccount(source);
         Mockito.verify(accountRepository).updateAccount(target);
+        Mockito.verifyNoMoreInteractions(accountRepository);
+    }
+
+    @Test
+    public void transferAmountNotNegative(){
+        //given
+        AccountService accountService = new AccountServiceImpl(accountRepository);
+        BankAccountKey sourceKey = BankAccountKey.valueOf(1);
+        BankAccount source = new BankAccount(sourceKey, "firstName", "secondName", 19.0);
+        BankAccountKey targetKey = BankAccountKey.valueOf(2);
+        BankAccount target = new BankAccount(targetKey, "firstName", "secondName", 18.0);
+
+        //when
+        assertThrows(TransferAmountValidationException.class, () -> accountService.transfer(source, target, -20.0));
+
+        //then
         Mockito.verifyNoMoreInteractions(accountRepository);
     }
 
